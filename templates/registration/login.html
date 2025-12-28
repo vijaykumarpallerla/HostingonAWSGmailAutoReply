@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<div style="max-width:480px;margin:40px auto;background:#23283a;color:#fff;padding:36px 42px;border-radius:12px;box-shadow:0 4px 24px #0006;font-family:system-ui,Segoe UI,Roboto,sans-serif;">
+    <h2 style="margin:0 0 24px 0;font-weight:600;font-size:1.8rem;">Login</h2>
+    <form method="post" style="display:flex;flex-direction:column;gap:16px;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" style="background:#0b74ff;color:#fff;border:none;padding:12px 0;border-radius:8px;font-size:1.05rem;font-weight:600;cursor:pointer;">Login</button>
+    </form>
+    {% if form.errors %}
+        <div style="color:#ff6b6b;margin-top:12px;font-size:0.95rem;">Invalid credentials. Please try again.</div>
+    {% endif %}
+    <div style="margin:28px 0 12px 0;height:1px;background:#31374a;"></div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+        <a href="{% url 'signup' %}" style="background:#393e52;color:#b3c6f7;text-align:center;padding:12px 0;border-radius:8px;text-decoration:none;font-weight:500;font-size:1.02rem;">Create account</a>
+        <a href="{% url 'gmail_auth' %}" style="display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;color:#23283a;padding:12px 0;border-radius:8px;font-weight:600;font-size:1.02rem;text-decoration:none;">
+            <span style="font-size:1.2rem;">&#128279;</span> Continue with Google
+        </a>
+    </div>
+    <p style="margin-top:20px;font-size:0.8rem;color:#8893a9;line-height:1.4;">"Continue with Google" authenticates you to this app. After login you can separately "Connect Gmail" to grant email read/send access for auto replies.</p>
+</div>
+{% endblock %}
