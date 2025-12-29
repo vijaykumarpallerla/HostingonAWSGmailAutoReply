@@ -113,10 +113,10 @@ if sys.platform == 'win32':
 else:
     DB_PATH = BASE_DIR / 'db.sqlite3'
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DB_PATH,
-    }
+    'default': dj_database_url.config(
+        default=f'sqlite:///{DB_PATH}',
+        conn_max_age=600
+    )
 }
 # For production (PostgreSQL via dj-database-url):
 # DATABASES = {
