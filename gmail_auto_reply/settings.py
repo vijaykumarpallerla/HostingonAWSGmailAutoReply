@@ -132,15 +132,18 @@ AUTHENTICATION_BACKENDS = (
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('SOCIAL_GOOGLE_CLIENT_ID', '')
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('SOCIAL_GOOGLE_CLIENT_SECRET', '')
 # Scopes for login (OpenID) and optionally Gmail modify (kept here if you want unified flow)
+# Scopes for login (OpenID) and Gmail access
 SOCIAL_AUTH_GOOGLE_OAUTH2_SCOPE = [
     'openid',
     'email',
     'profile',
+    'https://www.googleapis.com/auth/gmail.modify',
 ]
 
-# Always show Google account chooser for social-auth login
+# Always show Google account chooser and request offline access for refresh token
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
-    'prompt': 'select_account'
+    'access_type': 'offline',
+    'prompt': 'consent',
 }
 
 # Gmail API OAuth client (used for explicit "Connect Gmail" flow) – loaded for convenience
@@ -221,6 +224,7 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.user.get_username',
     'social_core.pipeline.user.create_user',
     'auto_reply.social_pipeline.restrict_email_domain',  # <--- domain check
+    'auto_reply.social_pipeline.save_gmail_token',       # <--- Save Gmail Token
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
     'social_core.pipeline.user.user_details',

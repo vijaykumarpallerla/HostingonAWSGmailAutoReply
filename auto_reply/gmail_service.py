@@ -61,6 +61,12 @@ def _eval_conditions_simple(rule_obj, subj: str) -> bool:
     # Safety: Ensure there was at least one "contains" condition that passed
     # (If there were no "contains" conditions, we shouldn't fire on everything)
     if not has_contains_condition:
+        # Fallback: Check legacy keywords if no specific subject conditions were found
+        if rule_obj.keywords:
+            kws = tokenize(rule_obj.keywords)
+            if any(k in subj_text for k in kws):
+                print(f"[DEBUG] Matched rule '{rule_obj.rule_name}' via legacy keywords: {kws}", file=sys.stderr)
+                return True
         return False
         
     return True

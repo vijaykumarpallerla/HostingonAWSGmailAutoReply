@@ -78,8 +78,13 @@ def rule_edit_ui(request, rule_id):
 def rules_dashboard(request):
 	# Show Gmail connect status
 	from .models import GmailToken, ReplyLog
+	
+	# With single-step login, we assume connected, but let's just check if we have a token for UI feedback if needed.
+	# In the new flow, this should almost always be true after login.
 	token_exists = GmailToken.objects.filter(user=request.user).exists()
-	gmail_profile = request.session.get('gmail_profile') or {}
+	
+	# We can get the profile email from the user object directly now
+	gmail_profile = {'emailAddress': request.user.email}
 	
 	# Stats
 	today_count = ReplyLog.objects.filter(user=request.user, sent_at__date=timezone.now().date()).count()
@@ -417,108 +422,6 @@ def gmail_auth(request):
 
 def gmail_callback(request):
 	return redirect('/')
-
-@login_required
-def gmail_connect(request):
-	"""Start Gmail OAuth flow (gmail.modify) for the current user."""
-	allowed_domains = getattr(settings, 'ALLOWED_EMAIL_DOMAINS', [])
-	allowed_emails = getattr(settings, 'ALLOWED_EMAILS', [])
-	
-	user_email = request.user.email
-	is_allowed = False
-	
-	if not allowed_domains and not allowed_emails:
-		is_allowed = True
-	elif user_email in allowed_emails:
-		is_allowed = True
-	elif any(user_email.endswith(domain) for domain in allowed_domains):
-		is_allowed = True
-		
-	if not is_allowed:
-		return JsonResponse({'error': f'Account {user_email} is not authorized to connect.'}, status=403)
-	if not settings.GMAIL_CLIENT_ID or not settings.GMAIL_CLIENT_SECRET:
-		return JsonResponse({'error': 'Missing GMAIL_CLIENT_ID/SECRET in .env'}, status=500)
-	redirect_uri = request.build_absolute_uri(reverse('gmail_oauth_callback'))
-	client_config = {
-		'web': {
-			'client_id': settings.GMAIL_CLIENT_ID,
-			'client_secret': settings.GMAIL_CLIENT_SECRET,
-			'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
-			'token_uri': 'https://oauth2.googleapis.com/token',
-			'redirect_uris': [redirect_uri],
-		}
-	}
-	raw_scopes = str(getattr(settings, 'GMAIL_OAUTH_SCOPES', 'https://www.googleapis.com/auth/gmail.modify'))
-	# Support comma or space separated scopes
-	if ',' in raw_scopes:
-		scopes = [s.strip() for s in raw_scopes.split(',') if s.strip()]
-	else:
-		scopes = [s.strip() for s in raw_scopes.split() if s.strip()]
-	if not scopes:
-		scopes = ['https://www.googleapis.com/auth/gmail.modify']
-	flow = Flow.from_client_config(client_config, scopes=scopes, redirect_uri=redirect_uri)
-	# NOTE: Removed include_granted_scopes to avoid invalid value error; Google accepts prompt+access_type for fresh consent.
-	auth_url, state = flow.authorization_url(access_type='offline', prompt='consent')
-	print(f"[GMAIL_CONNECT] redirect_uri={redirect_uri} scopes={scopes}", file=sys.stderr)
-	request.session['gmail_oauth_state'] = state
-	return redirect(auth_url)
-
-@login_required
-def gmail_oauth_callback(request):
-	"""OAuth callback: exchange code for tokens and store them for the user."""
-	try:
-		allowed_domain = getattr(settings, 'ALLOWED_EMAIL_DOMAIN', None)
-		if allowed_domain and not request.user.email.endswith(allowed_domain):
-			return JsonResponse({'error': f'Only {allowed_domain} accounts are allowed to connect Gmail.'}, status=403)
-		state = request.session.get('gmail_oauth_state')
-		redirect_uri = request.build_absolute_uri(reverse('gmail_oauth_callback'))
-		client_config = {
-			'web': {
-				'client_id': settings.GMAIL_CLIENT_ID,
-				'client_secret': settings.GMAIL_CLIENT_SECRET,
-				'auth_uri': 'https://accounts.google.com/o/oauth2/auth',
-				'token_uri': 'https://oauth2.googleapis.com/token',
-				'redirect_uris': [redirect_uri],
-			}
-		}
-		raw_scopes = str(getattr(settings, 'GMAIL_OAUTH_SCOPES', 'https://www.googleapis.com/auth/gmail.modify'))
-		if ',' in raw_scopes:
-			scopes = [s.strip() for s in raw_scopes.split(',') if s.strip()]
-		else:
-			scopes = [s.strip() for s in raw_scopes.split() if s.strip()]
-		if not scopes:
-			scopes = ['https://www.googleapis.com/auth/gmail.modify']
-		flow = Flow.from_client_config(client_config, scopes=scopes, state=state, redirect_uri=redirect_uri)
-		flow.fetch_token(authorization_response=request.build_absolute_uri())
-		creds = flow.credentials
-		# Persist tokens
-		from .models import GmailToken
-		token_obj, _ = GmailToken.objects.get_or_create(user=request.user)
-		token_obj.access_token = creds.token
-		token_obj.refresh_token = creds.refresh_token or token_obj.refresh_token or ''
-		# Some providers may omit expiry; default to ~55 minutes from now
-		token_obj.token_expiry = creds.expiry or (timezone.now() + timedelta(minutes=55))
-		token_obj.save()
-		# Optional sanity check: call Gmail profile
-		try:
-			service = build('gmail', 'v1', credentials=creds, cache_discovery=False)
-			profile = service.users().getProfile(userId='me').execute()
-			request.session['gmail_profile'] = {'emailAddress': profile.get('emailAddress')}
-		except Exception as _e:
-			print(f"[DEBUG] gmail_oauth_callback profile fetch error: {_e}", file=sys.stderr)
-		return redirect('rules_dashboard')
-	except Exception as e:
-		return JsonResponse({'error': str(e)}, status=500)
-
-@login_required
-def gmail_disconnect(request):
-	from .models import GmailToken
-	try:
-		GmailToken.objects.filter(user=request.user).delete()
-		request.session.pop('gmail_profile', None)
-		return redirect('rules_dashboard')
-	except Exception as e:
-		return JsonResponse({'error': str(e)}, status=500)
 
 @login_required
 def gmail_pull(request):

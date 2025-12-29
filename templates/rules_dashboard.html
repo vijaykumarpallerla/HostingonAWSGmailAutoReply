@@ -9,20 +9,7 @@
 </div>
 <div class="main-content">
     <h2>Rules</h2>
-    <div class="card" style="margin-bottom:16px;padding:12px;border:1px solid #ddd;border-radius:8px;">
-        {% if gmail_connected %}
-        <div>
-            <strong>Gmail:</strong>
-            Connected{% if gmail_profile.emailAddress %} as {{ gmail_profile.emailAddress }}{% endif %}.
-            <a href="/gmail/disconnect/" style="margin-left:12px;">Disconnect</a>
-        </div>
-        {% else %}
-        <div>
-            <strong>Gmail:</strong> Not connected.
-            <a href="/gmail/connect/" style="margin-left:12px;">Connect Gmail</a>
-        </div>
-        {% endif %}
-    </div>
+    <!-- Gmail Status Card Removed as per Single-Step Login Requirement -->
 
     <!-- Stats Card -->
     <div class="card"

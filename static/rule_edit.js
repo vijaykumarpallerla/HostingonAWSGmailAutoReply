@@ -102,7 +102,7 @@ function createConditionRow(index, fieldValue, condValue, keywordsValue, andOrVa
     delBtn.style.fontWeight = '600';
     delBtn.style.fontSize = '15px';
     delBtn.style.cursor = 'pointer';
-    delBtn.addEventListener('click', function() {
+    delBtn.addEventListener('click', function () {
         const filterConditionsContainer = document.getElementById('filterConditionsContainer');
         if (row.previousSibling && row.previousSibling.className === 'and-or-row') {
             filterConditionsContainer.removeChild(row.previousSibling);

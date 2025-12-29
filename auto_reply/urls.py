@@ -16,9 +16,6 @@ urlpatterns = [
     path('gmail/auth/', views.gmail_auth, name='gmail_auth'),
     path('gmail/callback/', views.gmail_callback, name='gmail_callback'),
     # Gmail API connect/disconnect (separate from app login)
-    path('gmail/connect/', views.gmail_connect, name='gmail_connect'),
-    path('gmail/oauth2callback/', views.gmail_oauth_callback, name='gmail_oauth_callback'),
-    path('gmail/disconnect/', views.gmail_disconnect, name='gmail_disconnect'),
     path('gmail/pull/', views.gmail_pull, name='gmail_pull'),
     # Testing endpoint to evaluate a rule against a sample email and optionally send a reply
     path('rules/test-fire/', views.test_fire, name='test_fire'),
