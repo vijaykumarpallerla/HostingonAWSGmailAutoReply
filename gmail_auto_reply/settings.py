@@ -67,6 +67,7 @@ ALLOWED_EMAILS = ['pallerlavijay315@gmail.com', 'manipallerla315@gmail.com' ,'vi
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -164,6 +165,7 @@ GMAIL_PULL_INTERVAL_SECONDS = int(os.environ.get('GMAIL_PULL_INTERVAL_SECONDS', 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 
 # Password validation
